@@ -1,0 +1,23 @@
+.wrong, .red {
+	background-color: red;
+}
+
+.badge, .yellow {
+	background-color: yellow;
+}
+
+.orange {
+	background-color: orange;
+}
+
+.text-red {
+	color: red;
+}
+
+.text-white {
+	color: white;
+}
+
+.text-green {
+	color: lightgreen;
+}
