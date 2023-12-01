@@ -18,7 +18,7 @@ async function handleFiles() {
 	let input = await document.getElementById("input").files[0];
 	let dayNum = document.getElementById("dayNum").value.toString().padStart(2, "0");
 	if(!input) {
-		input = await fetch(`inputs/day-${dayNum}`);
+		input = await fetch(`inputs/day-${dayNum}.txt`);
 	}
 	input = await input.text();
 	window[`day${dayNum}`](input);
