@@ -19,29 +19,37 @@ function day02(input) {
 	}
 
 	let isPossible = [false];
+	let power = [0];
 	let sum = 0;
+	let sum2 = 0;
 	for(let i = 1; i < games.length; i++) {
 		let game = games[i];
+		let red = 0;
+		let green = 0;
+		let blue = 0;
 		for(let pull of game) {
 			for(let group of pull) {
-				if(group[1] === "red" && group[0] > 12) {
-					console.log(`Game ${i} is impossible, we pulled ${group[0]} red.`);
-					isPossible[i] = false;
-					break;
+				if(group[1] === "red") {
+					if(group[0] > 12) {
+						console.log(`Game ${i} is impossible, we pulled ${group[0]} red.`);
+						isPossible[i] = false;
+					}
+					red = Math.max(group[0], red);
 				}
-				if(group[1] === "green" && group[0] > 13) {
-					console.log(`Game ${i} is impossible, we pulled ${group[0]} green.`);
-					isPossible[i] = false;
-					break;
+				if(group[1] === "green") {
+					if(group[0] > 13) {
+						console.log(`Game ${i} is impossible, we pulled ${group[0]} green.`);
+						isPossible[i] = false;
+					}
+					green = Math.max(group[0], green);
 				}
-				if(group[1] === "blue" && group[0] > 14) {
-					console.log(`Game ${i} is impossible, we pulled ${group[0]} blue.`);
-					isPossible[i] = false;
-					break;
+				if(group[1] === "blue") {
+					if(group[0] > 14) {
+						console.log(`Game ${i} is impossible, we pulled ${group[0]} blue.`);
+						isPossible[i] = false;
+					}
+					blue = Math.max(group[0], blue);
 				}
-			}
-			if(isPossible[i] === false) {
-				break;
 			}
 		}
 		if(isPossible[i] === false) {
@@ -51,6 +59,8 @@ function day02(input) {
 			isPossible[i] = true;
 			sum += i;
 		}
+		sum2 += red * green * blue;
 	}
 	displayCaption(`The sum of possible games is ${sum}.`);
+	displayCaption(`The power sum is ${sum2}.`);
 }
