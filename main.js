@@ -8,6 +8,7 @@ window.onload = function() {
 	let day = date.getUTCMonth() !== 11 ? 25 : date.getUTCDate();
 	document.getElementById("dayNum").value = Math.min(day, 25);
 	document.getElementById("startDay").addEventListener("click", handleFiles, false);
+	document.getElementById("clear").addEventListener("click", clearInput, false);
 }
 
 async function handleFiles() {
@@ -22,6 +23,10 @@ async function handleFiles() {
 	}
 	input = await input.text();
 	window[`day${dayNum}`](input);
+}
+
+function clearInput() {
+	document.getElementById("input").value = "";
 }
 
 function displayText(text = "") {
