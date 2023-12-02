@@ -37,7 +37,6 @@ function day02(input) {
 				let group = pull[k];
 				if(group[1] === "red") {
 					if(group[0] > 12) {
-						console.log(`Game ${i} is impossible, we pulled ${group[0]} red.`);
 						isPossible[i].push([j, k]);
 					}
 					if(group[0] > red) {
@@ -47,7 +46,6 @@ function day02(input) {
 				}
 				if(group[1] === "green") {
 					if(group[0] > 13) {
-						console.log(`Game ${i} is impossible, we pulled ${group[0]} green.`);
 						isPossible[i].push([j, k]);
 					}
 					if(group[0] > green) {
@@ -57,7 +55,6 @@ function day02(input) {
 				}
 				if(group[1] === "blue") {
 					if(group[0] > 14) {
-						console.log(`Game ${i} is impossible, we pulled ${group[0]} blue.`);
 						isPossible[i].push([j, k]);
 					}
 					if(group[0] > blue) {
@@ -68,7 +65,6 @@ function day02(input) {
 			}
 		}
 		if(isPossible[i].length === 0) {
-			console.log(`Game ${i} is possible.`);
 			sum += i;
 		}
 		maxCubeI[i] = [rI, gI, bI];
@@ -102,7 +98,7 @@ function day02(input) {
 		}
 
 		for(let inv of isPossible[i]) {
-			textGroups[inv[0]][inv[1]] = `<span style="text-decoration: line-through #FFFFFF">${textGroups[inv[0]][inv[1]]}</span>`;
+			textGroups[inv[0]][inv[1]] = `<span style="text-decoration: line-through 2px">${textGroups[inv[0]][inv[1]]}</span>`;
 		}
 		let maxCubes = maxCubeI[i];
 		textGroups[maxCubes[0][0]][maxCubes[0][1]] = `<span class="red">${textGroups[maxCubes[0][0]][maxCubes[0][1]]}</span>`;
