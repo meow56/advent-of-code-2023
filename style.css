@@ -10,6 +10,15 @@
 	background-color: orange;
 }
 
+.green {
+	background-color: green;
+}
+
+.blue {
+	background-color: blue;
+	color: white;
+}
+
 .text-red {
 	color: red;
 }
