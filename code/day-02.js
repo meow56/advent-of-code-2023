@@ -79,10 +79,10 @@ function day02(input) {
 
 	for(let i = 1; i < games.length; i++) {
 		let game = games[i];
-		let finalText = `Game ${i.toString().padStart(3, "0")}, `;
+		let finalText = `Game ${i.toString().padStart(3, " ")}, `;
 		let textGroups = [];
 		let power = maxCubeI[i].reduce((acc, val) => acc * game[val[0]][val[1]][0], 1);
-		finalText += `power ${power.toString().padStart(4, "0")}:`;
+		finalText += `power ${power.toString().padStart(4, " ")}:`;
 		if(isPossible[i].length > 0) {
 			finalText = `<span class="wrong">${finalText}</span>`;
 		}
