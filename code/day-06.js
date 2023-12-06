@@ -22,5 +22,7 @@ function day06(input) {
 	for(let i = 0; i < times.length; i++) {
 		product *= calcPossible(times[i], distances[i]);
 	}
+	let numWaysToWin = calcPossible(+(times.join("")), +(distances.join("")));
 	displayCaption(`The product is ${product}.`);
+	displayCaption(`The number of ways to win is ${numWaysToWin}.`);
 }
