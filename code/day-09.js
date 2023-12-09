@@ -15,6 +15,7 @@ function day09(input) {
 
 	let derivatives = [];
 	let sum = 0;
+	let otherSum = 0;
 	for(let sequence of sequences) {
 		let der = [sequence];
 
@@ -49,12 +50,15 @@ function day09(input) {
 
 		der.reverse();
 		let curr = 0;
+		let otherCurr = 0;
 		for(let i = 0; i < der.length; i++) {
 			let currDer = der[i];
 			curr = currDer[currDer.length - 1] + curr;
+			otherCurr = currDer[0] - otherCurr;
 		}
 		sum += curr;
-
+		otherSum += otherCurr;
 	}
 	displayCaption(`The sum is ${sum}.`);
+	displayCaption(`The other sum is ${otherSum}.`);
 }
