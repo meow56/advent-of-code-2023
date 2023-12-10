@@ -1,14 +1,256 @@
 "use strict";
 
 function day09(input) {
+	function Rational(numerator, denominator = 1n) {
+		this.intNumerator = numerator;
+		this.intDenominator = denominator;
+		this.reduce();
+	}
+
+	Rational.prototype.copy = function() {
+		let newCopy = new Rational(this.intNumerator, this.intDenominator);
+		return newCopy;
+	}
+
+	Rational.prototype.reduce = function() {
+		let iGCD;
+		if(this.intNumerator < 0) {
+			iGCD = intGCD(-this.intNumerator, this.intDenominator);
+		} else {
+			iGCD = intGCD(this.intNumerator, this.intDenominator);
+		}
+		this.intNumerator /= iGCD;
+		this.intDenominator /= iGCD;
+	}
+
+	Rational.prototype.multiply = function(n) {
+		if(typeof n === "bigint") {
+			this.intNumerator *= n;
+		} else {
+			this.intNumerator *= n.intNumerator;
+			this.intDenominator *= n.intDenominator;
+		}
+		this.reduce();
+		return this;
+	}
+
+	Rational.prototype.add = function(n) {
+		let numerator = this.intNumerator;
+		let denominator = this.intDenominator;
+		if(typeof n === "bigint") {
+			n = new Rational(n, 1n);
+		}
+		let nNumerator = n.intNumerator;
+		let nDenominator = n.intDenominator;
+		let iGCD = intGCD(denominator, nDenominator);
+		let toMultThis = nDenominator / iGCD;
+		let toMultN = denominator / iGCD;
+		//  a     c    a*d/GCD   c*b/GCD
+		// --- + --- = ------- + -------
+		//  b     d    b*d/GCD   b*d/GCD
+		this.intNumerator = (numerator * toMultThis) + (nNumerator * toMultN);
+		this.intDenominator *= toMultThis;
+		this.reduce();
+		return this;
+	}
+
+	Rational.prototype.sub = function(n) {
+		if(typeof n === "bigint") return this.add(-n);
+		let nCopy = n.copy();
+		nCopy.intNumerator *= -1n;
+		return this.add(nCopy);
+	}
+
+	Rational.prototype.toString = function() {
+		let numerator = this.intNumerator;
+		if(numerator === 0n) return "0";
+		let denominator = this.intDenominator;
+		if(denominator === 1n) return numerator.toString();
+		return `${numerator.toString()} / ${denominator.toString()}`
+	}
+
+	function gcd(a, b) {
+		let GCD = new Map();
+		for(let entry of a.entries()) {
+			if(entry[0] === 1n) continue;
+			if(b.has(entry[0])) {
+				let minVal = entry[1] < b.get(entry[0]) ? entry[1] : b.get(entry[0]);
+				GCD.set(entry[0], minVal);
+			}
+		}
+		return GCD;
+	}
+
+	function mult(base, n) {
+		for(let entry of n.entries()) {
+			if(entry[0] === 1n) continue;
+			if(base.has(entry[0])) {
+				base.set(entry[0], base.get(entry[0]) + entry[1]);
+			} else {
+				base.set(entry[0], entry[1]);
+			}
+		}
+	}
+
+	function toBigInt(map) {
+		let result = 0n;
+		for(let primeFactor of map.entries()) {
+			if(result === 0n) result = 1n;
+			result *= primeFactor[0] ** primeFactor[1];
+		}
+		return result;
+	}
+
+	function intGCD(a, b) {
+		if(a === 0n) return b;
+		while(true) {
+			b %= a;
+			if(b === 0n) return a;
+			a %= b;
+			if(a === 0n) return b;
+		}
+	}
+
+	function mod_exp(base, exp, mod) {
+		// More Wikipedia pseudocode.
+		// Thanks Wikipedia.
+		if(mod === 1n) return 0n;
+		let result = 1n;
+		base = base % mod;
+		while(exp > 0) {
+			if(exp % 2n === 1n) {
+				result = (result * base) % mod;
+			}
+			exp = exp >> 1n;
+			base = (base * base) % mod;
+		}
+		return result;
+	}
+
+	// Miller-Rabin primality test
+	// Based off pseudocode on Wikipedia
+	const somePrimes = [2n, 3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n, 29n, 31n, 37n, 41n];
+	function isPrime(n) {
+		if(somePrimes.includes(n)) return true;
+		if(n === 1n) return true;
+		let d = n - 1n;
+		let s = 0n;
+		while(d % 2n === 0n) {
+			s++;
+			d /= 2n;
+		}
+
+		for(let k = 0; k < somePrimes.length; k++) {
+			let a = somePrimes[k];
+			let x = mod_exp(a, d, n);
+			let y;
+			for(let i = 0; i < s; i++) {
+				y = (x ** 2n) % n;
+				if(y === 1n && x !== 1n && x !== n - 1n) {
+					return false;
+				}
+				x = y;
+			}
+			if(y !== 1n) return false;
+		}
+		return true;
+	}
+
+
+	const MAX_ITERS = 1000;
+	function factor(n) {
+		let primeFactors = new Map();
+		if(n === 0n) {
+			return primeFactors;
+		} else if(n === 1n) {
+			primeFactors.set(1n, 1n);
+			return primeFactors;
+		}
+		//console.time("factor");
+		//console.log(`Factoring ${n}`);
+
+		for(let i = 0; i < somePrimes.length; i++) {
+			let total = 0n;
+			while(n % somePrimes[i] === 0n) {
+				total++;
+				n /= somePrimes[i];
+			}
+			if(total !== 0n) {
+				primeFactors.set(somePrimes[i], total);
+			}
+		}
+		//if(typeof n === "number") n = BigInt(n);
+		let initX = 2n;
+		let g = a => (a * a + 1n) % n;
+		while(!isPrime(n)) {
+			// Using Pollard's rho algorithm
+			// Based off the pseudocode on Wikipedia
+			let x = initX;
+			let y = x;
+			let d = 1n;
+
+			let iterations = 0;
+			while(d === 1n && iterations++ < MAX_ITERS) {
+				x = g(x);
+				y = g(g(y));
+				let diff;
+				if(x > y) diff = x - y;
+				else diff = y - x;
+				d = intGCD(diff, n);
+			}
+
+			if(d !== n && d !== 1n) {
+				let total = 0n;
+				while(n % d === 0n) {
+					total++;
+					n /= d;
+				}
+				primeFactors.set(d, total);
+			} else {
+				// abort!
+				initX++;
+				if(initX === 100n) {
+					// Surely this is prime...
+					console.error(`This is taking too long, surely ${n} is prime...`);
+					break;
+				}
+				//throw `Help!`;
+			}
+		}
+
+		if(primeFactors.has(n)) {
+			primeFactors.set(n, primeFactors.get(n) + 1n);
+		} else {
+			primeFactors.set(n, 1n);
+		}
+		//console.timeEnd("factor");
+		return primeFactors;
+	}
+
 	function fact(n) {
+		if(n === 0n) return 1n;
+		return n * fact(n - 1n);
+	}
+
+	const FACT_FACT_MAP = new Map([
+		[0n, [[1n, 1n]]]
+		]);
+	function factFact(n) {
+		if(FACT_FACT_MAP.has(n)) return new Map(FACT_FACT_MAP.get(n));
+		let result = factFact(n - 1n);
+		mult(result, factor(n));
+		FACT_FACT_MAP.set(n, [...result.entries()]);
+		return result;
+	}
+
+	function intFact(n) {
 		if(n === 0) return 1;
-		return n * fact(n - 1);
+		return n * intFact(n - 1);
 	}
 
 	function tri(n) {
-		if(n === 0) return 0;
-		return n * (n + 1) / 2;
+		if(n === 0n) return 0n;
+		return n * (n + 1n) / 2n;
 	}
 
 	function displayFunc(der) {
@@ -30,22 +272,25 @@ function day09(input) {
 	let entry;
 	let sequences = [];
 	while(entry = FILE_REGEX.exec(input)) {
-		sequences.push(entry[1].split(" ").map(e => +e));
+		sequences.push(entry[1].split(" ").map(e => BigInt(+e)));
 	}
 
 	let derivatives = [];
-	let sum = 0;
-	let otherSum = 0;
+	let sum = new Rational(0n);
+	let otherSum = new Rational(0n);
 	for(let sequence of sequences) {
-		let der = [sequence[0]];
+		let der = [new Rational(BigInt(sequence[0]))];
 
 		let currSeq = sequence.slice();
-		while(!currSeq.every(e => e === 0)) {
+		while(!currSeq.every(e => e === 0n)) {
 			let temp = [];
 			for(let i = 0; i < currSeq.length - 1; i++) {
 				temp.push(currSeq[i + 1] - currSeq[i]);
 			}
-			der.push(temp[0]);
+			if(!temp.every(e => e === 0n)) {
+				let factDer = new Rational(temp[0]);
+				der.push(factDer);
+			}
 			currSeq = temp;
 		}
 
@@ -170,29 +415,45 @@ function day09(input) {
 		// error[2] = 2^n - 1
 		// error[3][j] = error[3][j - 1] * 3 + 2^
 		let error = [];
-		for(let i = 0; i < der.length - 1; i++) {
+		for(let i = 0n; i < der.length - 1; i++) {
 			error[i] = [];
+			//error[i][0] = new Rational(tri(i));
 			error[i][0] = tri(i);
 			for(let j = 1; j < der.length - 1; j++) {
-				if(i === 0) {
-					error[i][j] = 0;
+				if(i === 0n) {
+					error[i][j] = 0n;
 				} else {
-					error[i][j] = error[i][j - 1] * i + error[i - 1][j];
+					//error[i][j] = error[i][j - 1].copy().multiply(i).add(error[i - 1n][j]);
+					error[i][j] = error[i][j - 1] * i + error[i - 1n][j];
 				}
 			}
 		}
 
 		for(let i = der.length - 1; i >= 0; i--) {
 			for(let j = der.length - 1; j > i; j--) {
-				der[i] -= (der[j] / fact(j) * error[i][j - i - 1] * fact(i));
+				let newRat = new Rational(fact(BigInt(i)), fact(BigInt(j)));
+				der[i].sub(der[j].copy().multiply(error[i][j - i - 1]).multiply(newRat));
+				//der[i] -= der[j] * error[i][j - i - 1] * fact(i) / fact(j);
 			}
 		}
-		let nextX = sequence.length;
-		let nextF = 0;
-		for(let i = 0; i < der.length; i++) {
-			nextF += der[i] * (nextX ** i) / fact(i);
+		let nextX = BigInt(sequence.length);
+		let nextF = new Rational(0n);
+		let otherX = -1n;
+		let otherF = new Rational(0n);
+		for(let i = 0n; i < der.length; i++) {
+			let xPowed = nextX ** i;
+			let newRat = new Rational(xPowed, fact(i));
+			let otherRat = new Rational(otherX ** i, fact(i));
+			nextF.add(der[i].copy().multiply(newRat));
+			otherF.add(der[i].copy().multiply(otherRat));
+			//nextF += der[i] * xPowed / fact(i);
 		}
-		sum += nextF;
+		sum.add(nextF);
+		otherSum.add(otherF);
+		//console.warn(`We are done with ${sequence}!`);
+		// 120658783446
+		// 120659512109
+		// 1637452029
 
 		// for(let i = der.length - 1; i > 2; i--) {
 		// 	der[2] -= der[i] / fact(i) * (2 ** i - 2);
