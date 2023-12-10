@@ -146,11 +146,6 @@ function day10(input) {
 
 	function find(coord) {
 		return nodes[coord[1] * zoomIn[0].length + coord[0]];
-		for(let node of nodes) {
-			if(node.location[0] === coord[0] && node.location[1] === coord[1]) {
-				return node;
-			}
-		}
 	}
 
 	function inLoop(coord) {
@@ -273,22 +268,6 @@ function day10(input) {
 		regions.push(BFS(newStart));
 	}
 
-	//display(0);
-	function display(y) {
-		if(y === zoomIn.length) return;
-		let finalLine = "";
-		for(let x = 0; x < zoomIn[y].length; x++) {
-			if(regions[0].some(n => n[0] === x && n[1] === y) && inLoop([x, y])) {
-				finalLine += `<span class="red">${zoomIn[y][x]}</span>`;
-			} else if(inLoop([x, y])) {
-				finalLine += `<span class="green">${zoomIn[y][x]}</span>`;
-			} else {
-				finalLine += `${zoomIn[y][x]}`;
-			}
-		}
-		displayText(finalLine);
-		setTimeout(display, 0, y + 1);
-	}
 
 	let outside = [];
 	let inside = [];
@@ -310,4 +289,48 @@ function day10(input) {
 		}
 	}
 	displayCaption(`The inside tile count is ${actualTileCount}.`);
+
+	let displayLoops = [];
+	for(let coord of newLoop) {
+		if(!displayLoops[coord[1]]) displayLoops[coord[1]] = [];
+		displayLoops[coord[1]][coord[0]] = true;
+	}
+
+	function displayInLoop(coord) {
+		return displayLoops[coord[1]] !== undefined && displayLoops[coord[1]][coord[0]];
+	}
+
+	let displayInside = [];
+	for(let region of inside) {
+		for(let coord of region) {
+			if(!displayInside[coord[1]]) displayInside[coord[1]] = [];
+			displayInside[coord[1]][coord[0]] = true;
+		}
+	}
+
+	function displayInSide(coord) {
+		return displayInside[coord[1]] !== undefined && displayInside[coord[1]][coord[0]];
+	}
+
+	display(0);
+	function display(y) {
+		if(y === zoomIn.length) return;
+		let finalLine = "";
+		for(let x = 0; x < zoomIn[y].length; x++) {
+			if(displayInLoop([x, y])) {
+				finalLine += `█`;
+			} else if(displayInSide([x, y])) {
+				finalLine += `▒`;
+			} else {
+				if(zoomIn[y][x] === ".") finalLine += " ";
+				else finalLine += `${zoomIn[y][x]}`;
+			}
+		}
+		displayText(finalLine);
+		setTimeout(display, 0, y + 1);
+	}
+	displayCaption(`The map is shown at 3x size.`);
+	displayCaption(`The loop is shown in black (█).`);
+	displayCaption(`The inside region is shown in gray (▒).`);
+	displayCaption(`Pipes that are outside and are not part of the loop are also shown.`);
 }
