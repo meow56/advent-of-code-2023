@@ -46,6 +46,8 @@ function day11(input) {
 				crossedX++;
 			} else if(point1[1] > row && point2[1] < row) {
 				crossedX++;
+			} else if(point1[1] < row && point2[1] < row) {
+				break;
 			}
 		}
 		let crossedY = 0;
@@ -54,6 +56,8 @@ function day11(input) {
 				crossedY++;
 			} else if(point1[0] > column && point2[0] < column) {
 				crossedY++;
+			} else if(point1[0] < column && point2[0] < column) {
+				break;
 			}
 		}
 		let correctionFactor = part2 ? (1000000 - 1) : (2 - 1);
@@ -72,4 +76,34 @@ function day11(input) {
 	}
 	displayCaption(`The sum is ${sum}.`);
 	displayCaption(`The sum is ${sum2}.`);
+	displayCaption(`The universe is displayed.`);
+	displayCaption(`Empty rows and columns are replaced with ellipsises.`);
+	displayCaption(`Galaxies are shown with ▓, while empty space is ░.`);
+
+	const EMP_COL_SPACER = ` ... `;
+	let spacerLine = new Array(grid[0].length + (emptyColumns.length * (EMP_COL_SPACER.length - 1))).fill(" ");
+	for(let i = 0; i < emptyColumns.length; i++) {
+		spacerLine[emptyColumns[i] - 1 + (EMP_COL_SPACER.length - 1) * i] = ".";
+		spacerLine[emptyColumns[i] + 1 + (EMP_COL_SPACER.length - 1) * (i + 1)] = ".";
+	}
+	const spacerRow = spacerLine.join("");
+	for(let y = 0; y < grid.length; y++) {
+		if(emptyRows.includes(y)) {
+			displayText(spacerRow);
+			displayText(spacerRow);
+			displayText(spacerRow);
+		} else {
+			let finalLine = ``;
+			for(let x = 0; x < grid[y].length; x++) {
+				if(emptyColumns.includes(x)) {
+					finalLine += EMP_COL_SPACER;
+				} else if(grid[y][x] === ".") {
+					finalLine += `░`;
+				} else {
+					finalLine += `▓`;
+				}
+			}
+			displayText(finalLine);
+		}
+	}
 }
