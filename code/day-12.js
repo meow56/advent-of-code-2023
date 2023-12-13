@@ -12,42 +12,6 @@ function day12(input) {
 		unfolded.push([realRow, realClue]);
 	}
 
-	function count(string, char) {
-		let result = 0;
-		for(let i = 0; i < string.length; i++) {
-			if(string[i] === char) result++;
-		}
-		return result;
-	}
-
-	function generateClue(poss) {
-		let newClue = [];
-		let currGroup = 0;
-		for(let char of poss) {
-			if(currGroup > 0 && char === ".") {
-				newClue.push(currGroup);
-				currGroup = 0;
-			} else if(char === "#") {
-				currGroup++;
-			}
-		}
-		if(currGroup !== 0) newClue.push(currGroup);
-		return newClue;
-	}
-
-	function compare(a, b) {
-		let minLength = Math.min(a.length, b.length);
-		for(let i = 0; i < minLength; i++) {
-			if(a[i] !== b[i]) {
-				return a[i] - b[i];
-			}
-		}
-		if(a.length !== b.length) return a.length - b.length;
-		return 0;
-	}
-
-
-
 	const POSS_MAP = new Map();
 	// There are two cases.
 	// Case 1: We don't use the current character to fulfill a clue.
@@ -92,11 +56,13 @@ function day12(input) {
 	}
 
 	let sum = 0;
+	let displayThingy = [];
 	for(let i = 0; i < rows.length; i++) {
 		let split = rows[i][0].split(".").filter(e => e.length !== 0).join(".");
 		let clues = rows[i][1];
 		let temp = getPoss(split, clues);
 		sum += temp;
+		displayThingy[i] = [rows[i][0], clues, temp];
 	}
 	let otherSum = 0;
 	for(let i = 0; i < unfolded.length; i++) {
@@ -104,7 +70,15 @@ function day12(input) {
 		let clues = unfolded[i][1];
 		let temp = getPoss(split, clues);
 		otherSum += temp;
+		displayThingy[i].push(temp);
 	}
 	displayCaption(`The sum is ${sum}.`);
-	displayCaption(`The other sum is ${otherSum}.`);
+	displayCaption(`Oops! The actual sum is ${otherSum}.`);
+
+	let maxInputLength = Math.max(...displayThingy.map(e => `${e[0]} ${e[1].join(", ")}`.length));
+	let maxPart1Length = Math.max(...displayThingy.map(e => e[2].toString().length));
+	for(let line of displayThingy) {
+		let inputLine = `${line[0]} ${line[1].join(", ")}`.padEnd(maxInputLength, " ");
+		displayText(`${inputLine} => ${line[2].toString().padStart(maxPart1Length, " ")}; x5 => ${line[3]}`);
+	}
 }
