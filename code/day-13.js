@@ -37,21 +37,58 @@ function day13(input) {
 		}
 		return -1;
 	}
+
+	function getOneOffs(field) {
+		for(let row = 0; row < field.length - 1; row++) {
+			let reflection = [];
+			for(let j = 0; j <= row; j++) {
+				reflection[j] = [j];
+			}
+			for(let j = row + 1; j < field.length; j++) {
+				let mirrorIndex = row - (j - row - 1);
+				if(reflection[mirrorIndex]) reflection[mirrorIndex].push(j);
+			}
+
+			let madeCorrection = false;
+			let symm = reflection.every(function(e) {
+				let temp = e.length !== 2 || field[e[0]].join("") === field[e[1]].join("");
+				if(temp) return temp;
+				if(madeCorrection) return false;
+				for(let i = 0; i < field[e[0]].length; i++) {
+					if(field[e[0]][i] !== field[e[1]][i]) {
+						if(madeCorrection) return false;
+						madeCorrection = true;
+					}
+				}
+				return true;
+			});
+			if(symm && madeCorrection) return row;
+		}
+		return -1;
+	}
+
 	let sum = 0;
+	let otherSum = 0;
 	for(let i = 0; i < fields.length; i++) {
-		let field = fields[i];
-		let horizSymm = checkSymmetry(field);
+		let field = fields[i].slice();
+		let horizSymm = checkSymmetry(field.slice());
+		let horizWrongSymm = getOneOffs(field.slice());
 		if(horizSymm !== -1) {
 			sum += 100 * (horizSymm + 1);
-			continue;
 		}
-		let vertSymm = checkSymmetry(fieldsByRows[i]);
+		if(horizWrongSymm !== -1) {
+			otherSum += 100 * (horizWrongSymm + 1);
+		}
+		let vertSymm = checkSymmetry(fieldsByRows[i].slice());
+		let vertWrongSymm = getOneOffs(fieldsByRows[i].slice());
 		if(vertSymm !== -1) {
 			sum += vertSymm + 1;
-			continue;
 		}
-		throw `${i} is not horizontally or vertically symmetrical`;
+		if(vertWrongSymm !== -1) {
+			otherSum += (vertWrongSymm + 1);
+		}
 	}
 
 	displayCaption(`The sum is ${sum}.`);
+	displayCaption(`The other sum is ${otherSum}.`);
 }
