@@ -26,16 +26,18 @@ function day15(input) {
 	
 	function hashmap(str) {
 		if(str.includes("-")) {
-			let toHash = str.split("-")[0];
-			let hashVal = hash(toHash);
+			let label = str.split("-")[0];
+			let hashVal = hash(label);
 			let box = boxes[hashVal];
-			box.delete(toHash);
+			displayInstruction(label, hashVal);
+			box.delete(label);
 		} else {
 			let info = str.split("=");
 			let label = info[0];
 			let focal = +(info[1]);
 			let hashVal = hash(label);
 			let box = boxes[hashVal];
+			displayInstruction(label, hashVal, focal);
 			box.set(label, focal);
 		}
 	}
@@ -55,4 +57,38 @@ function day15(input) {
 	}
 	displayCaption(`The sum is ${sum}.`);
 	displayCaption(`The focus power is ${focusPowerSum}.`);
+	displayCaption(`The actions taken are shown.`);
+	displayCaption(`Instructions that do nothing are removed for brevity.`);
+	displayCaption(`After that, the boxes in their final state are shown.`);
+	displayCaption(`The lenses are in the correct order, with each lens showing their label and their focal length.`);
+
+	function displayInstruction(word, hash, focal) {
+		if(focal !== undefined) {
+			if(boxes[hash].has(word)) {
+				displayText(`Word ${word}: Change lens to length ${focal} in box ${hash}.`);
+			} else {
+				displayText(`Word ${word}: Add lens of length ${focal} to box ${hash}.`);
+			}
+		} else {
+			if(boxes[hash].has(word)) {
+				displayText(`Word ${word}: Remove lens (length ${boxes[hash].get(word)}) from box ${hash}.`);
+			} else {
+				//displayText(`Word ${word}: Do nothing.`);
+			}
+		}
+	}
+
+	function displayBoxes() {
+		for(let i = 0; i < boxes.length; i++) {
+			let finalText = `Box ${i}: `;
+			let box = boxes[i];
+			for(let lens of box.entries()) {
+				finalText += `[${lens[0]} ${lens[1]}] `;
+			}
+			displayText(finalText);
+		}
+	}
+	displayText();
+	displayText(`Final box configuration:`);
+	displayBoxes();
 }
