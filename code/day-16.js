@@ -53,11 +53,52 @@ function day16(input) {
 		}
 	}
 
-	move([-1, 0], [1, 0]);
-
-	let sum = -1;
-	for(let entry of ENERGIZED.values()) {
-		sum++;
+	let max = 0;
+	for(let i = 0; i < grid.length; i++) {
+		move([-1, i], [1, 0]);
+		let sum = -1;
+		for(let entry of ENERGIZED.values()) {
+			sum++;
+		}
+		max = Math.max(max, sum);
+		ENERGIZED.clear();
+		VISITED.clear();
+		if(i === 0)
+			displayCaption(`The sum is ${sum}.`);
 	}
-	displayCaption(`The sum is ${sum}.`);
+
+	for(let i = 0; i < grid.length; i++) {
+		move([grid[i].length, i], [-1, 0]);
+		let sum = -1;
+		for(let entry of ENERGIZED.values()) {
+			sum++;
+		}
+		max = Math.max(max, sum);
+		ENERGIZED.clear();
+		VISITED.clear();
+	}
+
+	for(let i = 0; i < grid[0].length; i++) {
+		move([i, -1], [0, 1]);
+		let sum = -1;
+		for(let entry of ENERGIZED.values()) {
+			sum++;
+		}
+		max = Math.max(max, sum);
+		ENERGIZED.clear();
+		VISITED.clear();
+	}
+
+	for(let i = 0; i < grid[0].length; i++) {
+		move([grid.length, i], [0, -1]);
+		let sum = -1;
+		for(let entry of ENERGIZED.values()) {
+			sum++;
+		}
+		max = Math.max(max, sum);
+		ENERGIZED.clear();
+		VISITED.clear();
+	}
+
+	displayCaption(`The max is ${max}.`);
 }
