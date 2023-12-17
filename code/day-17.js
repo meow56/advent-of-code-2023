@@ -91,8 +91,9 @@ function day17(input) {
 	}
 
 	function find(pos, universe, direction) {
-		if(universe[1] === direction && universe[0] === 3) return undefined;
+		if(universe[1] === direction && universe[0] === 10) return undefined;
 		if((universe[1] + 2) % 4 === direction) return undefined;
+		if(universe[1] !== direction && universe[0] < 4 && universe[0] > 0) return undefined;
 		let grid;
 		if(universe[1] === direction) {
 			grid = multiverse[universe[1]][universe[0] + 1];
@@ -118,7 +119,7 @@ function day17(input) {
 
 	for(let i = 0; i < 4; i++) {
 		let dirVerses = [];
-		for(let j = 0; j < 4; j++) {
+		for(let j = 0; j < 11; j++) {
 			let newUniverse;
 			newUniverse = grid.map(e => e.map(a => a.copy()));
 			dirVerses.push(newUniverse);
@@ -126,8 +127,8 @@ function day17(input) {
 		multiverse.push(dirVerses);
 	}
 
-	for(let i = 0; i < 4; i++) {
-		for(let j = 0; j < 4; j++) {
+	for(let i = 0; i < multiverse.length; i++) {
+		for(let j = 0; j < multiverse[i].length; j++) {
 			let universe = multiverse[i][j];
 			for(let k = 0; k < universe.length; k++) {
 				for(let l = 0; l < universe[k].length; l++) {
@@ -154,7 +155,7 @@ function day17(input) {
 			}
 		}
 
-		while(s.every(e => e.pos[0] !== finalNode[0] || e.pos[1] !== finalNode[1])) {
+		while(s.length === 0 || !(s[s.length - 1].pos[0] === finalNode[0] && s[s.length - 1].pos[1] === finalNode[1] && s[s.length - 1].universe[0] >= 4)) {
 			let next = toAdd.remove();
 			let nextDepth = next.depth;
 			let nextNode = next;
