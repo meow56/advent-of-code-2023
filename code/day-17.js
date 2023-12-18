@@ -51,7 +51,8 @@ function day17(input) {
 		return returnVal;
 	}
 
-	Heap.prototype.updateKey = function(key, newValue) {
+	Heap.prototype.updateKey = function(key, newValue, predecessor) {
+		key.predecessor = predecessor;
 		let currIndex = key.index;
 		key.depth = newValue;
 		for(; currIndex >= 1 && this.elems[Math.floor(currIndex / 2)].depth > key.depth; currIndex = Math.floor(currIndex / 2)) {
@@ -70,14 +71,15 @@ function day17(input) {
 		this.edges = [];
 		this.depth = Infinity;
 		this.index;
+		this.predecessor;
 	}
 
-	Node.prototype.initialize = function(universe) {
+	Node.prototype.initialize = function(universe, part2) {
 		this.universe = universe;
-		let upNode = find([this.pos[0], this.pos[1] - 1], universe, 0);
-		let leftNode = find([this.pos[0] - 1, this.pos[1]], universe, 1);
-		let downNode = find([this.pos[0], this.pos[1] + 1], universe, 2);
-		let rightNode = find([this.pos[0] + 1, this.pos[1]], universe, 3);
+		let upNode = find([this.pos[0], this.pos[1] - 1], universe, 0, part2);
+		let leftNode = find([this.pos[0] - 1, this.pos[1]], universe, 1, part2);
+		let downNode = find([this.pos[0], this.pos[1] + 1], universe, 2, part2);
+		let rightNode = find([this.pos[0] + 1, this.pos[1]], universe, 3, part2);
 
 		// 0 = up, 1 = left, 2 = down, 3 = right
 		if(rightNode) this.edges.push([rightNode, 3]);
@@ -90,15 +92,16 @@ function day17(input) {
 		return new Node(this.pos.slice(), this.universe.slice(), this.value);
 	}
 
-	function find(pos, universe, direction) {
-		if(universe[1] === direction && universe[0] === 10) return undefined;
+	function find(pos, universe, direction, part2) {
+		if(universe[1] === direction && universe[0] === (part2 ? 10 : 3)) return undefined;
 		if((universe[1] + 2) % 4 === direction) return undefined;
-		if(universe[1] !== direction && universe[0] < 4 && universe[0] > 0) return undefined;
+		if(part2 && universe[1] !== direction && universe[0] < 4 && universe[0] > 0) return undefined;
 		let grid;
+		let verse = part2 ? multiverse2 : multiverse;
 		if(universe[1] === direction) {
-			grid = multiverse[universe[1]][universe[0] + 1];
+			grid = verse[universe[1]][universe[0] + 1];
 		} else {
-			grid = multiverse[direction][1];
+			grid = verse[direction][1];
 		}
 
 		if(grid[pos[1]] === undefined) return undefined;
@@ -108,6 +111,7 @@ function day17(input) {
 	// multiverse[direction][straight][y][x]
 	const FILE_REGEX = /.+/g;
 	let multiverse = [];
+	let multiverse2 = [];
 	let grid = [];
 	let entry;
 	while(entry = FILE_REGEX.exec(input)) {
@@ -119,12 +123,19 @@ function day17(input) {
 
 	for(let i = 0; i < 4; i++) {
 		let dirVerses = [];
-		for(let j = 0; j < 11; j++) {
+		let dirVerses2 = [];
+		for(let j = 0; j < 4; j++) {
 			let newUniverse;
 			newUniverse = grid.map(e => e.map(a => a.copy()));
 			dirVerses.push(newUniverse);
 		}
+		for(let j = 0; j < 11; j++) {
+			let newUniverse;
+			newUniverse = grid.map(e => e.map(a => a.copy()));
+			dirVerses2.push(newUniverse);
+		}
 		multiverse.push(dirVerses);
+		multiverse2.push(dirVerses2);
 	}
 
 	for(let i = 0; i < multiverse.length; i++) {
@@ -132,7 +143,7 @@ function day17(input) {
 			let universe = multiverse[i][j];
 			for(let k = 0; k < universe.length; k++) {
 				for(let l = 0; l < universe[k].length; l++) {
-					universe[k][l].initialize([j, i]);
+					universe[k][l].initialize([j, i], false);
 				}
 			}
 		}
@@ -140,53 +151,131 @@ function day17(input) {
 
 	let finalNode = [grid[0].length - 1, grid.length - 1];
 
-	function djikstra() {
-		let s = [];
+	function djikstra(part2) {
+		let s;
 		// node, depth
 		let toAdd = new Heap();
-		multiverse[2][0][0][0].depth = 0;
-		for(let i = 0; i < multiverse.length; i++) {
-			for(let j = 0; j < multiverse[i].length; j++) {
-				for(let k = 0; k < multiverse[i][j].length; k++) {
-					for(let l = 0; l < multiverse[i][j][k].length; l++) {
-						toAdd.insert(multiverse[i][j][k][l]);
+		let verse = part2 ? multiverse2 : multiverse;
+		verse[2][0][0][0].depth = 0;
+		for(let i = 0; i < verse.length; i++) {
+			for(let j = 0; j < verse[i].length; j++) {
+				for(let k = 0; k < verse[i][j].length; k++) {
+					for(let l = 0; l < verse[i][j][k].length; l++) {
+						toAdd.insert(verse[i][j][k][l]);
 					}
 				}
 			}
 		}
 
-		while(s.length === 0 || !(s[s.length - 1].pos[0] === finalNode[0] && s[s.length - 1].pos[1] === finalNode[1] && s[s.length - 1].universe[0] >= 4)) {
+		while(s === undefined || !(s.pos[0] === finalNode[0] && s.pos[1] === finalNode[1] && (!part2 || s.universe[0] >= 4))) {
 			let next = toAdd.remove();
-			let nextDepth = next.depth;
-			let nextNode = next;
-			s.push(next);
+			s = next;
 			for(let edge of next.edges) {
 				let node = edge[0];
 				if(node.depth > next.depth + edge[0].value) {
-					toAdd.updateKey(node, next.depth + edge[0].value);
+					toAdd.updateKey(node, next.depth + edge[0].value, s);
 				}
 			}
 		}
-		return s[s.length - 1];
+		return s;
 	}
 
-	//let heatLoss = minWeight(find([0, 0]), 0, undefined, 0, [find([0, 0])]);
-	let heatLoss = djikstra();
-	displayCaption(`The heat loss is ${heatLoss.depth}.`);
+	let heatLoss = djikstra(false);
+	displayCaption(`The heat loss with crucibles is ${heatLoss.depth}.`);
+
+	let path = [];
+	let currNode = heatLoss;
+	let forDisplay = [];
+	while(currNode.pos[0] !== 0 || currNode.pos[1] !== 0) {
+		path.push(currNode.pos.join());
+		currNode = currNode.predecessor;
+	}
+	path.push("0,0");
+	forDisplay.push(display(path));
+
+
+	multiverse = [];
+	for(let i = 0; i < 4; i++) {
+		let dirVerses2 = [];
+		for(let j = 0; j < 11; j++) {
+			let newUniverse;
+			newUniverse = grid.map(e => e.map(a => a.copy()));
+			dirVerses2.push(newUniverse);
+		}
+		multiverse2.push(dirVerses2);
+	}
+
+	for(let i = 0; i < multiverse2.length; i++) {
+		for(let j = 0; j < multiverse2[i].length; j++) {
+			let universe = multiverse2[i][j];
+			for(let k = 0; k < universe.length; k++) {
+				for(let l = 0; l < universe[k].length; l++) {
+					universe[k][l].initialize([j, i], true);
+				}
+			}
+		}
+	}
+	let heatLoss2 = djikstra(true);
+	displayCaption(`The heat loss with ultra crucibles is ${heatLoss2.depth}.`);
+
+	let path2 = [];
+	let currNode2 = heatLoss2;
+	while(currNode2.pos[0] !== 0 || currNode2.pos[1] !== 0) {
+		path2.push(currNode2.pos.join());
+		currNode2 = currNode2.predecessor;
+	}
+	path2.push("0,0");
+	forDisplay.push(display(path2));
+
+	let displayMap = assignBlock("map");
+	let displayMap2 = assignBlock("map2");
+	function closure() {
+		let showPart2 = false;
+		for(let line of forDisplay[0]) {
+			displayMap.displayText(line);
+		}
+		for(let line of forDisplay[1]) {
+			displayMap2.displayText(line);
+		}
+		displayMap2.style = `display: none;`;
+		displayMap.style = ``;
+
+
+		function switchPart() {
+			showPart2 = !showPart2;
+			if(showPart2) {
+				displayMap.style = `display: none;`;
+				displayMap2.style = ``;
+			} else {
+				displayMap2.style = `display: none;`;
+				displayMap.style = ``;
+			}
+		}
+
+		return switchPart;
+	}
+
+	let switchPart = closure();
+	let button = assignButton(switchPart, "Part 2");
+
+	displayCaption(`The map is shown.`);
+	displayCaption(`The path the (ultra) crucible takes is shown with black background.`);
+	displayCaption(`Use the button to switch parts.`);
 
 	function display(path) {
+		let returnVal = [];
 		for(let i = 0; i < grid.length; i++) {
 			let finalLine = ``;
 			for(let j = 0; j < grid[i].length; j++) {
-				if(path.includes(grid[i][j])) {
+				if(path.includes(`${j},${i}`)) {
 					// heatLoss[1].findIndex((e) => e === grid[i][j]) % 10
 					finalLine += `<span class="black">${grid[i][j].value}</span>`;
 				} else {
 					finalLine += grid[i][j].value;
 				}
 			}
-			displayText(finalLine);
+			returnVal.push(finalLine);
 		}
+		return returnVal;
 	}
-	//display(heatLoss[1]);
 }
