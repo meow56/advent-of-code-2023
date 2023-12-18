@@ -4,117 +4,124 @@ function day18(input) {
 	const FILE_REGEX = /(.) (\d+) \(#([a-z0-9]{6})\)/g;
 	let instructions = [];
 	let entry;
+	const NUM_TO_DIR = ["R", "D", "L", "U"];
 	while(entry = FILE_REGEX.exec(input)) {
-		instructions.push([entry[1], +(entry[2]), entry[3]]);
+		//instructions.push([entry[1], +(entry[2]), entry[3]]);
+		let newInstruction = [];
+		newInstruction[0] = NUM_TO_DIR[entry[3][5]];
+		newInstruction[1] = parseInt(entry[3].slice(0, -1), 16);
+		instructions.push(newInstruction);
 	}
 
-	let grid = [["#"]];
+	let vertLines = [];
+	let horiLines = [];
 	let currCoord = [0, 0];
 	for(let inst of instructions) {
 		let direction;
 		switch(inst[0]) {
 		case "U":
-			direction = [0, -1];
-			for(let i = 0; i < inst[1]; i++) {
-				currCoord = [currCoord[0] + direction[0], currCoord[1] + direction[1]];
-				if(grid[currCoord[1]] === undefined) {
-					let temp = (new Array(grid[0].length)).fill(".");
-					grid.unshift(temp);
-					currCoord[1]++;
-				}
-				grid[currCoord[1]][currCoord[0]] = "#";
-			}
+			vertLines.push([[currCoord[0], currCoord[1] - inst[1]], currCoord.slice()]);
+			currCoord[1] -= inst[1];
 			break;
 		case "L":
-			direction = [-1, 0];
-			for(let i = 0; i < inst[1]; i++) {
-				currCoord = [currCoord[0] + direction[0], currCoord[1] + direction[1]];
-				if(grid[currCoord[1]][currCoord[0]] === undefined) {
-					for(let j = 0; j < grid.length; j++) {
-						grid[j].unshift(".");
-					}
-					currCoord[0]++;
-				}
-				grid[currCoord[1]][currCoord[0]] = "#";
-			}
+			horiLines.push([[currCoord[0] - inst[1], currCoord[1]], currCoord.slice()]);
+			currCoord[0] -= inst[1];
 			break;
 		case "D":
-			direction = [0, 1];
-			for(let i = 0; i < inst[1]; i++) {
-				currCoord = [currCoord[0] + direction[0], currCoord[1] + direction[1]];
-				if(grid[currCoord[1]] === undefined) {
-					let temp = (new Array(grid[0].length)).fill(".");
-					grid.push(temp);
-				}
-				grid[currCoord[1]][currCoord[0]] = "#";
-			}
+			vertLines.push([currCoord.slice(), [currCoord[0], currCoord[1] + inst[1]]]);
+			currCoord[1] += inst[1];
 			break;
 		case "R":
-			direction = [1, 0];
-			for(let i = 0; i < inst[1]; i++) {
-				currCoord = [currCoord[0] + direction[0], currCoord[1] + direction[1]];
-				if(grid[currCoord[1]][currCoord[0]] === undefined) {
-					for(let j = 0; j < grid.length; j++) {
-						grid[j].push(".");
-					}
-				}
-				grid[currCoord[1]][currCoord[0]] = "#";
-			}
+			horiLines.push([currCoord.slice(), [currCoord[0] + inst[1], currCoord[1]]]);
+			currCoord[0] += inst[1];
 			break;
 		}
 	}
 
-	display();
-	displayText();
-	let newGrid = [];
-	for(let i = 0; i < grid.length; i++) {
-		newGrid.push(grid[i].slice());
-	}
-	for(let i = -grid[0].length; i < grid.length; i++) {
-		let parity = false;
-		for(let j = 0; j < grid[0].length; j++) {
-			let coord = [j, i + j];
-			if(newGrid[coord[1]] === undefined) continue;
-			if(newGrid[coord[1]][j] === "#") {
-				if((!newGrid[coord[1] - 1] || newGrid[coord[1] - 1][j] === ".") && (!newGrid[coord[1]][j + 1] || newGrid[coord[1]][j + 1] === ".")) {
+	//display();
+	//displayText();
+	vertLines.sort((a, b) => a[0][1] - b[0][1]);
+	let minValue = vertLines.reduce((acc, val) => Math.min(acc, val[0][1]), Infinity);
+	let maxValue = vertLines.reduce((acc, val) => Math.max(acc, val[1][1]), 0);
+	let volume = 0;
 
-				} else if((!newGrid[coord[1] + 1] || newGrid[coord[1] + 1][j] === ".") && (!newGrid[coord[1]][j - 1] || newGrid[coord[1]][j - 1] === ".")) {
 
-				} else {
-					parity = !parity;	
-				}
+	for(let i = minValue; i <= maxValue; i++) {
+		if(i % 1000000 === 0) console.log(`Doing ${i}`);
+		let relevant = [];
+		for(let line of vertLines) {
+			if(line[0][1] <= i && line[1][1] >= i) {
+				relevant.push(line);
+			} else if(line[0][1] > i) {
+				break;
 			}
-			if(parity) {
-				grid[coord[1]][coord[0]] = "#";
+		}
+
+		relevant.sort((a, b) => a[0][0] - b[0][0]);
+
+		let parityCorrection = 0;
+		for(let j = 0; j < relevant.length - 1; j++) {
+			let first = relevant[j];
+			let second = relevant[j + 1];
+			if(first[0][1] === i && second[1][1] === i) {
+				if(horiLines.findIndex(e => 
+					((e[0][0] === first[0][0] && e[0][1] === first[0][1] 
+					&& e[1][0] === second[1][0] && e[1][1] === second[1][1]))) !== -1) {
+					volume += second[0][0] - first[0][0];
+					parityCorrection++;
+				} else if((j + parityCorrection) % 2 === 0) {
+					volume += second[0][0] - first[0][0] + 1;
+				}
+			} else if(first[1][1] === i && second[0][1] === i) {
+				if(horiLines.findIndex(e => 
+					((e[0][0] === first[1][0] && e[0][1] === first[1][1] 
+					&& e[1][0] === second[0][0] && e[1][1] === second[0][1]))) !== -1) {
+					volume += second[0][0] - first[0][0];
+					parityCorrection++;
+				} else if((j + parityCorrection) % 2 === 0) {
+					volume += second[0][0] - first[0][0] + 1;
+				}
+			} else if((first[0][1] === i && second[0][1] === i)) {
+				if(horiLines.findIndex(e =>
+					e[0][0] === first[0][0] && e[0][1] === first[0][1]  
+					&& e[1][0] === second[0][0] && e[1][1] === second[0][1]) !== -1) {
+					if((j + parityCorrection) % 2 === 0) {
+						volume += second[0][0] - first[0][0] + 1;
+					} else {
+						volume += second[0][0] - first[0][0] - 1;
+						if(j === relevant.length - 2 || j === 0) volume++;
+					}
+				} else if((j + parityCorrection) % 2 === 0) {
+					volume += second[0][0] - first[0][0] + 1;
+				}
+			} else if(first[1][1] === i && second[1][1] === i) {
+				if(horiLines.findIndex(e =>
+					e[0][0] === first[1][0] && e[0][1] === first[1][1]  
+					&& e[1][0] === second[1][0] && e[1][1] === second[1][1]) !== -1) {
+					if((j + parityCorrection) % 2 === 0) {
+						volume += second[0][0] - first[0][0] + 1;
+					} else {
+						volume += second[0][0] - first[0][0] - 1;
+						if(j === relevant.length - 2 || j === 0) volume++;
+					}
+				} else if((j + parityCorrection) % 2 === 0) {
+					volume += second[0][0] - first[0][0] + 1;
+				}
+			} else {
+				if((j + parityCorrection) % 2 === 0) {
+					volume += second[0][0] - first[0][0] + 1;
+				}
 			}
 		}
 	}
 
-	// for(let i = 0; i < grid.length; i++) {
-	// 	let row = grid[i];
-	// 	let parity = false;
-	// 	let streak = false;
-	// 	for(let j = 0; j < row.length; j++) {
-	// 		if(row[j] === "#" && !streak) {
-	// 			parity = !parity;
-	// 			streak = true;
-	// 		}
-	// 		if(row[j] === ".") {
-	// 			streak = false;
-	// 		}
-	// 		if(parity) {
-	// 			grid[i][j] = "#";
-	// 		}
-	// 	}
-	// }
-
-	let volume = grid.reduce((acc, val) => acc + val.reduce((a, v) => a + +(v === "#"), 0), 0);
 	displayCaption(`The volume is ${volume}.`);
+
 
 	function display() {
 		for(let line of grid) {
 			displayText(line.join(""));
 		}
 	}
-	display();
+	//display();
 }
