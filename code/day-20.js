@@ -52,8 +52,9 @@ function day20(input) {
 	}
 
 	let totals = [0, 0];
+	let notDone = true;
 	let iters = 0;
-	while(iters !== 1000) {
+	while(notDone) {
 		iters++;
 		let pulseCount = [0, 0];
 		let pulses = [["button", 0]];
@@ -94,13 +95,18 @@ function day20(input) {
 						pulses.push([node, pulseOut, nextNode.name]);
 					}
 					break;
+				case "r":
+					if(nextPulse[1] === 0) {
+						displayCaption(`Num buttons: ${iters}`);
+						notDone = false;
+					}
 				}
 			}
 		}
 
 		totals[0] += pulseCount[0];
 		totals[1] += pulseCount[1];
+		if(iters === 1000) displayCaption(`The product is ${totals[0] * totals[1]}.`);
 	}
 
-	displayCaption(`The product is ${totals[0] * totals[1]}.`);
 }
