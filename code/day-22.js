@@ -19,6 +19,9 @@ function day22(input) {
 
 		this.atRest = false;
 		this.restsOn = [];
+		this.supports = [];
+
+		this.numFall = new Map();
 	}
 
 	Brick.prototype.intersects = function(pos, type) {
@@ -66,6 +69,9 @@ function day22(input) {
 			if(collision) {
 				brick.atRest = true;
 				brick.restsOn = colliders;
+				for(let col of colliders) {
+					col.supports.push(brick);
+				}
 				break;
 			} else {
 				brick.pos = newPos;
@@ -79,10 +85,44 @@ function day22(input) {
 			if(!invalid.includes(brick.restsOn[0])) {
 				invalid.push(brick.restsOn[0]);
 			}
-			displayCaption(`${brick.restsOn[0].pos.map(e => e.join()).join("~")} is invalid since ${brick.pos.map(e => e.join()).join("~")} only rests on it.`);
+			displayText(`${brick.restsOn[0].pos.map(e => e.join()).join("~")} is invalid since ${brick.pos.map(e => e.join()).join("~")} only rests on it.`);
 		}
+	}
+
+	function cascade(brick, deleted = []) {
+		let MAP_KEY = deleted.map(e => e.pos.map(f => f.join()).join("~")).join();
+		if(brick.numFall.has(MAP_KEY)) return brick.numFall.get(MAP_KEY).slice();
+		if(brick.supports.length === 0) {
+			brick.numFall.set(MAP_KEY, [0, deleted.slice()]);
+			return [0, deleted.slice()];
+		}
+		deleted.push(brick);
+		let total = 0;
+		for(let fallBrick of brick.supports) {
+			if(fallBrick.restsOn.every(e => deleted.includes(e))) {
+				let result = cascade(fallBrick, deleted.slice());
+				total += 1 + result[0];
+				deleted = result[1].slice();
+			}
+		}
+		brick.numFall.set(MAP_KEY, [total, deleted]);
+		return [total, deleted];
+	}
+
+	for(let brick of bricks) {
+		cascade(brick);
+	}
+
+	displayText();
+	let totalFalls = 0;
+	for(let brick of bricks) {
+		displayText(`Brick ${brick.pos.map(e => e.join()).join("~")} causes ${brick.numFall.get("")[0]} other bricks to fall.`);
+		totalFalls += brick.numFall.get("")[0];
 	}
 
 
 	displayCaption(`The number of removable bricks is ${bricks.length - invalid.length}.`);
+	displayCaption(`The total fallen is ${totalFalls}.`);
+	displayCaption(`The invalid bricks and the reason for their invalidity is shown.`);
+	displayCaption(`After that, the number of bricks that would fall if a certain brick were deleted is shown.`);
 }
