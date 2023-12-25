@@ -127,4 +127,6 @@ function day25(input) {
 	}
 
 	displayCaption(`The product is ${cut.length * (nodes.length - cut.length)}.`);
+
+	displayCaption(`Merry Christmas!`);
 }
